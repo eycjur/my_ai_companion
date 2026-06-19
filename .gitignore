@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# 秘密情報
+.env
+
+# 長期記憶（ローカル）
+**/memory/
+
+# macOS
+.DS_Store
+
+# py2app / pyinstaller
+*.app

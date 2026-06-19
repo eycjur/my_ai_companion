@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "my-ai-companion"
+version = "0.1.0"
+description = "My AI Companion — macOS 常駐 AI コンパニオン（Gemini Live + openWakeWord）"
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "MIT" }
+dependencies = [
+    "google-genai>=2.8.0",
+    "openwakeword>=0.6.0; sys_platform == 'darwin'",
+    "sounddevice>=0.5.5",
+    "numpy>=2.4.6",
+    "rumps>=0.4.0; sys_platform == 'darwin'",
+    "python-dotenv>=1.2.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+my-ai-companion = "ai_companion.controller.menubar:run"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["ai_companion*"]
+
+[tool.uv]
+package = true
+exclude-newer = "7 days"
+override-dependencies = [
+    "tflite-runtime; sys_platform == 'linux' and python_version < '3.12'",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
