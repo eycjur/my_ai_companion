@@ -55,6 +55,7 @@ class Settings:
 
     gemini_api_key: str = ""
     wake_model: str = DEFAULT_WAKE_MODEL
+    wake_model_path: str = ""  # カスタム .onnx/.tflite パス。設定時は wake_model より優先
     wake_threshold: float = DEFAULT_WAKE_THRESHOLD
     live_model: str = DEFAULT_LIVE_MODEL
     voice: str = DEFAULT_VOICE
@@ -90,6 +91,7 @@ class Settings:
         settings = cls(
             gemini_api_key=_get("GEMINI_API_KEY") or _get("GOOGLE_API_KEY"),
             wake_model=_get("AICP_WAKE_MODEL") or DEFAULT_WAKE_MODEL,
+            wake_model_path=_get("AICP_WAKE_MODEL_PATH"),
             wake_threshold=_float("AICP_WAKE_THRESHOLD", DEFAULT_WAKE_THRESHOLD),
             live_model=_get("AICP_LIVE_MODEL") or DEFAULT_LIVE_MODEL,
             voice=_get("AICP_VOICE") or DEFAULT_VOICE,
@@ -107,9 +109,22 @@ class Settings:
             settings.persona.user_nickname = nick
         return settings
 
+    @property
+    def effective_wake_model(self) -> str:
+        """実際に openWakeWord へ渡す値。
+
+        カスタムモデルパス（AICP_WAKE_MODEL_PATH）が指定されていればそれを優先し、
+        なければ事前学習済みモデル名（AICP_WAKE_MODEL）を使う。
+        """
+        return self.wake_model_path or self.wake_model
+
     def validate(self) -> list[str]:
         """不足している必須設定の一覧を返す（空ならOK）。"""
         problems: list[str] = []
         if not self.gemini_api_key:
             problems.append("GEMINI_API_KEY が未設定です。")
+        if self.wake_model_path and not Path(self.wake_model_path).expanduser().exists():
+            problems.append(
+                f"AICP_WAKE_MODEL_PATH のファイルが見つかりません: {self.wake_model_path}"
+            )
         return problems

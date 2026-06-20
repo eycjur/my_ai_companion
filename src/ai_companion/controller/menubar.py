@@ -6,7 +6,6 @@
 """
 from __future__ import annotations
 
-import os
 import sys
 
 import rumps
@@ -54,7 +53,7 @@ def _build_orchestrator(settings: Settings, on_state: callable) -> Orchestrator:
 
     # Wake word
     detector = OpenWakeWordDetector(
-        wake_model=os.environ.get("AICP_WAKE_MODEL_PATH") or settings.wake_model,
+        wake_model=settings.effective_wake_model,
         threshold=settings.wake_threshold,
     )
 

@@ -19,3 +19,7 @@ venv/
 
 # py2app / pyinstaller
 *.app
+
+# model
+model/
+!model/.gitkeep
