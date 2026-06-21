@@ -1,4 +1,4 @@
-# My AI Companion — macOS 常駐 AI コンパニオン 🌙
+# My AI Companion — macOS 常駐 AI コンパニオン 🤖
 
 ウェイクワードで起動し、**Gemini Live API** によるリアルタイム音声会話を行う
 macOS メニューバー常駐の AI コンパニオン。長期記憶は常時有効で、会話の要約と
@@ -39,9 +39,12 @@ controller/menubar(rumps) → Orchestrator(状態機械: LISTENING → CONVERSIN
 
 ### インストール
 ```bash
-uv sync
+make install   # 依存をインストールし、openWakeWord のモデルを取得（初回のみ）
+```
 
-# openWakeWord の事前学習済みモデルを取得（初回のみ）
+`make` を使わない場合は直接:
+```bash
+uv sync
 uv run python -c "import openwakeword.utils as u; u.download_models()"
 ```
 
@@ -53,12 +56,48 @@ cp .env.example .env
 
 ### 起動
 ```bash
-uv run python -m ai_companion                    # メニューバー常駐
-uv run python -m ai_companion.controller.console  # コンソール（開発用）
+make run    # メニューバー常駐（フォアグラウンド）
+make dev    # コンソール版（開発用・ウェイクワード不要で対話）
 ```
 
-🌙 が出たら待機中。**"Hey Jarvis"**（`hey_jarvis` モデル）と話しかけると 💬 になり会話開始。
-「またね」「おやすみ」などで終了すると 🌙 に戻る。
+🤖 が出たら待機中。**"Hey Jarvis"**（`hey_jarvis` モデル）と話しかけると 🤖💬 になり会話開始。
+「またね」「おやすみ」などで終了すると 🤖 に戻る。
+
+### バックグラウンド常駐（launchd）
+
+ターミナルを閉じても動き続け、ログイン時に自動起動させたい場合は macOS の
+LaunchAgent に登録する。リポジトリには[テンプレート](packaging/com.my-ai-companion.plist.template)
+だけを置き、`make register` がパスを埋めて `~/Library/LaunchAgents/` に実体を生成する
+（launchd は `~` を展開しないため絶対パスが必要）。管理は `Makefile` 経由で行う。
+
+```bash
+make register     # LaunchAgent を登録して常駐開始（以降ログイン時も自動起動）
+make status       # 常駐状態を確認
+make logs         # ログを追尾（うまく動かないとき）
+make unregister   # 常駐を解除（自動起動も無効化）
+```
+
+| コマンド | 説明 |
+|----------|------|
+| `make register` | `~/Library/LaunchAgents/` に登録し即起動。クラッシュ時のみ自動再起動 |
+| `make unregister` | 停止して登録を解除 |
+| `make restart` | 再起動（コード変更の反映や、メニューの「終了」後に動かし直すとき） |
+| `make status` | 稼働状態・PID・最終終了コードを表示 |
+| `make logs` | `~/Library/Logs/ai-companion.err.log` を追尾 |
+
+メニューバーの 🤖 をクリックすると次が選べる:
+
+- **会話を終了** — 進行中の会話だけ打ち切り、待機に戻す（常駐は継続）
+- **ログを開く** — `~/Library/Logs/ai-companion.err.log` を既定アプリで開く（常駐時のログ）
+- **自動起動を解除して終了** — plist を削除＆アンロードしてアプリ終了（`make unregister` 相当。次回ログインから出ない）
+- **終了** — アプリを終了するだけ（登録は残るので次回ログインで自動復活）
+
+「終了」したあと再び動かすには `make restart`。
+
+> **メモ**: 生成される plist は venv の Python（`.venv/bin/python`）と作業ディレクトリを
+> 絶対パスで持つ。別の場所に clone・移動した場合は、その場所で `make unregister && make register`
+> すればパスが更新される。初回のマイクアクセス時に許可ダイアログが出る（出ない場合は
+> システム設定 → プライバシーとセキュリティ → マイク で Python を許可）。
 
 ## カスタマイズ
 

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  LaunchAgent テンプレート。launchd は ~ や環境変数を展開しないため絶対パスが必須。
+  __PROJECT_DIR__ / __HOME__ は `make install` 時に sed で実際の絶対パスへ置換され、
+  ~/Library/LaunchAgents/ に実体が生成される（このテンプレ自体は読み込まれない）。
+
+  ユーザーの GUI セッションで常駐させ、メニューバーに 🤖 を出す。
+  ターミナルを閉じても生存し、ログイン時に自動起動、クラッシュ時のみ自動再起動する。
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.my-ai-companion</string>
+
+    <!-- venv の Python を直接起動（uv run を介さず毎回同じ環境で動かす）。
+         -m ai_companion は src/ai_companion/__main__.py を実行する。 -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>__PROJECT_DIR__/.venv/bin/python</string>
+        <string>-m</string>
+        <string>ai_companion</string>
+    </array>
+
+    <!-- CWD をプロジェクト直下に固定 → config.py が CWD の .env を読めるので
+         GEMINI_API_KEY 等が launchd 経由でも渡る（launchd はシェル環境を継承しないため重要）。 -->
+    <key>WorkingDirectory</key>
+    <string>__PROJECT_DIR__</string>
+
+    <!-- ログイン時に自動起動 -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- 異常終了（クラッシュ）時のみ再起動。メニューの「終了」(exit 0) では再起動しない。 -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <!-- 標準出力/エラーをログファイルへ（rumps/SDK のログはここに出る）。 -->
+    <key>StandardOutPath</key>
+    <string>__HOME__/Library/Logs/ai-companion.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>__HOME__/Library/Logs/ai-companion.err.log</string>
+</dict>
+</plist>
